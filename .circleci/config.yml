@@ -3,7 +3,7 @@ jobs:
   build:
     docker:
       # Specify the version you desire here
-      - image: lephi966/php72-with-nginx:php72-with-nginx
+      - image: circleci/php:7.4-node-browsers
 
     steps:
       - checkout
