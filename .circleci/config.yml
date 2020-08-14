@@ -1,22 +1,39 @@
-version: 2
-jobs:
-  build:
-    docker:
-      # Specify the version you desire here
-      - image: circleci/php:7.4-node-browsers
+version: 2.1
 
+# Orbs
+orbs:
+  php: circleci/php@1.0.1
+
+# Jobs
+jobs:
+  # job 1: checkout source code from github
+  checkout_code:
+    executor: php/default
+    working_directory: ~/project
     steps:
       - checkout
+      - persist_to_workspace:
+          root: ./
+          paths:
+            - ./
 
+  # job 2: build environment like: install php, install composer, install dependencies
+  build_enviroment:
+    executor: php/default
+    working_directory: ~/project
+    steps:
+      - attach_workspace:
+          at: ~/project
+      - php/install-composer # Install composer from orb
       - restore_cache:
           keys:
-            - dependencies-{{ checksum "composer.json" }}
-            - dependencies-
+            - composer-{{ checksum "composer.json" }}
+            - composer-
       - run:
           name: "Install Dependencies"
           command: composer install -n --prefer-dist
       - save_cache:
-          key: dependencies-{{ checksum "composer.json" }}
+          key: composer-{{ checksum "composer.json" }}
           paths:
             - ./vendor
       - run:
@@ -24,6 +41,34 @@ jobs:
           command: |
             mv .env.example .env
             php artisan key:generate
+      - persist_to_workspace:
+          root: ./
+          paths:
+            - ./
+
+  # job 3: Run PHPUnit test and store test results to artifacts
+  phpunit_test:
+    executor: php/default
+    working_directory: ~/project
+    steps:
+      - attach_workspace:
+          at: ~/project
       - run:
           name: "Run Tests"
-          command: ./vendor/bin/phpunit
+          command: ./vendor/bin/phpunit --coverage-html ~/test-results/coverage-result.html --coverage-xml ~/test-results/coverage-result.xml --log-junit ~/test-results/test-result.xml
+      - store_test_results:
+          path: ~/test-results
+      - store_artifacts:
+          path: ~/test-results
+
+# Workflows
+workflows:
+  build_and_test:
+    jobs:
+      - checkout_code
+      - build_enviroment:
+          requires:
+            - checkout_code
+      - phpunit_test:
+          requires:
+            - build_enviroment
