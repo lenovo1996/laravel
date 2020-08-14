@@ -25,6 +25,9 @@ jobs:
       - attach_workspace:
           at: ~/project
       - php/install-composer # Install composer from orb
+      - run:
+          name: "Install PHP Xdebug"
+          command: apt-get install php-xdebug
       - restore_cache:
           keys:
             - composer-{{ checksum "composer.json" }}
