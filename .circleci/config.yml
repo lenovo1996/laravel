@@ -1,0 +1,29 @@
+version: 2
+jobs:
+  build:
+    docker:
+      # Specify the version you desire here
+      - image: lephi966/php72-with-nginx:php72-with-nginx
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "composer.json" }}
+            - v1-dependencies-
+      - run:
+          name: "Install Dependencies"
+          command: composer install -n --prefer-dist
+      - save_cache:
+          key: v1-dependencies-{{ checksum "composer.json" }}
+          paths:
+            - ./vendor
+      - run:
+          name: "Create Environment file and generate app key"
+          command: |
+            mv .env.example .env
+            php artisan key:generate
+      - run:
+          name: "Run Tests"
+          command: ./vendor/bin/phpunit
