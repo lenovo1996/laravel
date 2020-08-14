@@ -10,13 +10,13 @@ jobs:
 
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "composer.json" }}
-            - v1-dependencies-
+            - dependencies-{{ checksum "composer.json" }}
+            - dependencies-
       - run:
           name: "Install Dependencies"
           command: composer install -n --prefer-dist
       - save_cache:
-          key: v1-dependencies-{{ checksum "composer.json" }}
+          key: dependencies-{{ checksum "composer.json" }}
           paths:
             - ./vendor
       - run:
